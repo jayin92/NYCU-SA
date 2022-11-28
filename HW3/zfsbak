@@ -1,0 +1,107 @@
+#!/usr/local/bin/bash
+#/usr/local/bin/zfsbak
+
+usage(){
+    echo "Usage:"
+    echo "- create: zfsbak DATASET [ROTATION_CNT]"
+    echo "- list: zfsbak -l|--list [DATASET|ID|DATASET ID]"
+    echo "- delete: zfsbak -d|--delete [DATASET|ID|DATASET ID...]"
+    echo "- export: zfsbak -e|--export DATASET [ID]"
+    echo "- import: zfsbak -i|--import FILENAME DATASET"
+}
+
+datetime(){
+    date "+%Y-%m-%d-%H:%M:%S"
+}
+
+create(){
+    dataset=$1
+    rotation_cnt=${2:-12}
+    cur_time=$(datetime)
+    zfs snapshot $dataset@$cur_time
+    echo "Snap $dataset@$cur_time"
+    results=$(zfs list -r -t snapshot -o name "$dataset" 2> /dev/null | tail -n +2 | sort -t '@' -k 2)
+    total=$(echo -e "$results" | wc -l)
+    cnt=$(( $total - $rotation_cnt ))
+    echo -e "$results" |
+    while IFS="" read -r line && [ $cnt -gt 0 ]; do
+        echo "Destroy $line"
+        zfs destroy $line
+        cnt=$(( $cnt - 1 ))
+    done
+}
+
+delete(){
+    re='^[0-9]+$'
+    dataset="mypool"
+    if ! [ -z "$1" ] && [[ "$1" =~ $re ]]; then
+        id=${@:1}
+    elif ! [ -z $2 ]; then
+        dataset=${1:-mypool}
+        id=${@:2}
+    else
+        dataset=${1:-mypool}
+        id=-1
+    fi
+    cnt=1
+    results=$(zfs list -r -t snapshot  -o name "$dataset" 2> /dev/null | tail -n +2 | sort -t '@' -k 2)
+    if [ -z "$results" ]; then
+        return 0
+    fi
+    echo -e "$results" |
+    while IFS="" read -r line; do
+        if [[ $id == -1 ]] || [[ " ${id[*]} " =~ " ${cnt} " ]] ; then
+            echo "Destroy $line"
+            zfs destroy $line
+        fi
+        cnt=$(( $cnt + 1 ))
+    done
+}
+
+list(){
+    re='^[0-9]+$'
+    dataset="mypool"
+    if ! [ -z "$1" ] && [[ "$1" =~ $re ]]; then
+        id=$1
+    else
+        dataset=${1:-mypool}
+        id=${2:--1}
+    fi
+
+    echo -e "ID\tDATASET\t\tTIME"
+    n=1
+    results=$(zfs list -r -t snapshot -o name "$dataset" 2> /dev/null | tail -n +2 | sed 's/@/\t/g' | sort -k 2)
+    if [ -z "$results" ]; then
+        return 0
+    fi
+    echo -e "$results" |
+    while IFS="" read -r line; do
+        if [[ $id == -1 ]] || [[ $id == $n ]]; then
+           echo -e "$n\t$line"
+        fi
+        n=$(( $n + 1 ))
+    done
+}
+
+exp(){
+    echo ""
+}
+
+import(){
+    echo ""
+}
+
+
+if [ -z "$1" ] && [ -z "$2" ]; then
+    usage
+elif [ "$1" == "-l" ] || [ "$1" == "--list" ]; then
+    list $2 $3
+elif [ "$1" == "-d" ] || [ "$1" == "--delete" ]; then
+    delete $2 "${@:3}"
+elif [ "$1" == "-e" ] || [ "$1" == "--export" ]; then
+    exp $2 $3
+elif [ "$1" == "-i" ] || [ "$1" == "--import" ]; then
+    import $2 $3
+else
+    create $1 $2
+fi

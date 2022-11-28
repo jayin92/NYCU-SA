@@ -1,0 +1,20 @@
+#!/bin/sh
+# /usr/local/etc/rc.d/fb_watchd
+
+# PROVIDE: ftpwatchd
+# REQUIRE: NETWORKING SERVER
+# BEFORE: DAEMON
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name=ftp_watchd
+rcvar=ftpwatchd_enable
+
+command=/usr/local/sbin/pure-uploadscript
+command_args="-B -r /root/uploadscript.sh"
+ftpwatchd_pidfile="/var/run/pure-uploadscript.pid"
+ftpwatchd_enable=${ftpwatchd_enable:-"no"}
+
+load_rc_config $name
+run_rc_command "$1"
