@@ -1,0 +1,17 @@
+#!/usr/local/bin/bash
+
+DOMAIN="$1"
+
+sudo service nginx stop
+
+cd /home/judge/hw4/preflight
+cp ./data/config.template "./data/config"
+sed -i '' -e "s/server_name\ \ example.com/server_name\ \ $DOMAIN/g" "./data/config"
+sudo cp ./data/config /usr/local/etc/nginx/nginx.conf
+./src/get-certs.sh "$DOMAIN"
+
+sudo service nginx start
+
+sleep 2
+
+exit 0

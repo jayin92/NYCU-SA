@@ -1,0 +1,15 @@
+#!/usr/local/bin/bash
+
+domain=$1
+
+cd /home/judge/hw4/4-3
+
+nohup ./src/update.sh > ./update.log 2>&1 &
+echo $! >> ./save_pid.txt
+
+nohup sudo /home/judge/my_env/bin/python3 ./src/main.py $domain > ./flask.log 2>&1 &
+echo $! >> ./save_pid.txt
+
+sleep 2
+
+exit 0
