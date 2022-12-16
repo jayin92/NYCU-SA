@@ -2,13 +2,23 @@
 
 domain=$1
 
+export SSL_CERT_FILE=/etc/ssl/certs/rootca.pem
+sudo service nginx stop
+
 cd /home/judge/hw4/4-3
+cp ./data/config.template "./data/config"
+sed -i '' -e "s/server_name\ \ example.com/server_name\ \ $domain/g" "./data/config"
+sudo cp ./data/config /usr/local/etc/nginx/nginx.conf
+./src/get-certs.sh "$domain"
+
 
 nohup ./src/update.sh > ./update.log 2>&1 &
 echo $! >> ./save_pid.txt
 
-nohup sudo /home/judge/my_env/bin/python3 ./src/main.py $domain > ./flask.log 2>&1 &
+sudo nohup /home/judge/my_env/bin/python3 ./src/main.py $domain > ./flask.log 2>&1 &
 echo $! >> ./save_pid.txt
+
+sudo service nginx start
 
 sleep 2
 

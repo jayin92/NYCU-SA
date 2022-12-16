@@ -1,0 +1,12 @@
+#!/usr/local/bin/bash
+
+source=$1
+
+echo "source: $source"
+
+key=`curl -X POST $source/json -H "Content-Type: application/json" -d '{"keyword":"give_me_secret_key"}' | jq .secretKey --raw-output`
+curl -o /home/judge/hw4/4-5/secretFile.txt -X POST $source/urlencoded -H "Content-Type: application/x-www-form-urlencoded" --data-urlencode "secretKey=$key"
+curl -X POST $source/multipart -H "Content-Type: multipart/form-data" -F 'secretFile=@/home/judge/hw4/4-5/secretFile.txt'
+
+exit 0
+

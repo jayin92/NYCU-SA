@@ -1,5 +1,8 @@
 #!/usr/local/bin/bash
 
-kill -9 `cat save_pid.txt`
+sudo kill -15 `cat /home/judge/hw4/4-3/save_pid.txt`
+rm /home/judge/hw4/4-3/save_pid.txt
+
+sudo service nginx stop
 
 exit 0

@@ -1,0 +1,38 @@
+#!/usr/local/bin/bash
+
+sudo service nginx stop
+
+cd /home/judge/hw4/4-1
+echo -n > ./data/.htpasswd
+
+while getopts 'd:p:u:' opt; do
+    case $opt in
+        d) domain="$OPTARG";;
+        p) secret="$OPTARG";;
+        u) echo "$OPTARG" >> ./data/.htpasswd;mkdir ./data/static/`echo "$OPTARG" | cut -d ":" -f1`;;
+    esac
+done
+
+
+cp ./data/config.template "./data/config"
+cp ./data/key.jwk.template "./data/key.jwk"
+
+sed -i '' -e "s/server_name\ \ example.com/server_name\ \ $domain/g" "./data/config"
+sed -i '' -e "s/_replace_me/$secret/g" "./data/key.jwk"
+
+sudo cp ./data/config /usr/local/etc/nginx/nginx.conf
+./src/get-certs.sh "$domain"
+
+sudo nohup /home/judge/my_env/bin/python3 ./src/main.py $secret > ./flask.log 2>&1 &
+echo $! >> ./save_pid.txt
+
+sudo service nginx start
+
+while true; do
+    curl localhost > /dev/null 2>&1
+    if [ "$?" -eq 0 ]; then
+        break
+    fi
+done
+
+exit 0

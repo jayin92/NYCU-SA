@@ -12,6 +12,11 @@ sudo cp ./data/config /usr/local/etc/nginx/nginx.conf
 
 sudo service nginx start
 
-sleep 2
+while true; do
+    curl localhost > /dev/null
+    if [ "$?" -eq 0 ]; then
+        break
+    fi
+done
 
 exit 0

@@ -1,5 +1,7 @@
 #!/usr/local/bin/bash
 
+cd /home/judge/hw4/4-3/
+
 while true
 do
     free_space=`df / | tail -n +2 | tr -s " " | cut -d" " -f3`;

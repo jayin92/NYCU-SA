@@ -1,0 +1,22 @@
+#!/usr/local/bin/bash
+
+domain="$1"
+
+sudo service nginx stop
+
+cd /home/judge/hw4/4-2
+cp ./data/config.template "./data/config"
+sed -i '' -e "s/server_name\ \ example.com/server_name\ \ $domain/g" "./data/config"
+sudo cp ./data/config /usr/local/etc/nginx/nginx.conf
+./src/get-certs.sh "$domain"
+
+sudo service nginx start
+
+while true; do
+    curl localhost > /dev/null
+    if [ "$?" -eq 0 ]; then
+        break
+    fi
+done
+
+exit 0

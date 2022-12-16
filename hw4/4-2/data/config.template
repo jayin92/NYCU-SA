@@ -1,0 +1,126 @@
+# user  root;
+worker_processes  1;
+
+# This default error log path is compiled-in to make sure configuration parsing
+# errors are logged somewhere, especially during unattended boot when stderr
+# isn't normally logged anywhere. This path will be touched on every nginx
+# start regardless of error log location configured here. See
+# https://trac.nginx.org/nginx/ticket/147 for more info.
+#
+#error_log  /var/log/nginx/error.log;
+#
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    server {
+        listen       80;
+
+        server_name  example.com;
+        return 302 https://$server_name$request_uri;
+    }
+
+
+    # another virtual host using mix of IP-, name-, and port-based configuration
+    #
+    #server {
+    #    listen       8000;
+    #    listen       somename:8080;
+    #    server_name  somename  alias  another.alias;
+
+    #    location / {
+    #        root   html;
+    #        index  index.html index.htm;
+    #    }
+    #}
+
+
+    # HTTPS server
+    #
+    server {
+        listen       443 ssl;
+        server_name  example.com;
+
+        ssl_certificate      certs/cert.pem;
+        ssl_certificate_key  certs/key.pem;
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+        
+        # reverse proxy from /api/1.0/query/{k}/{v} to /query?k={k}&v={v}
+        location ~ /api/1.0/query/(.*)/(.*) {
+            add_header 'Access-Control-Allow-Origin' $http_origin always;
+            add_header 'Access-Control-Allow-Credentials' "true";
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            # if ($request_method = 'OPTIONS') {
+            #     add_header 'Access-Control-Allow-Origin' $http_origin always;
+            #     add_header 'Access-Control-Allow-Credentials' "true";
+            #     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            #     add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            #     add_header 'Access-Control-Max-Age' 1728000;
+            #     add_header 'Content-Type' 'text/plain; charset=utf-8';
+            #     add_header 'Content-Length' 0;
+            #     return 200;
+            # }
+            
+            proxy_hide_header X-Powered-By;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_pass http://ca.nasa.nycu:4442/query?k=$1&v=$2;
+        }
+
+
+
+
+        location /api/1.0/ {            
+            # Handle CORS preflight requests
+            add_header 'Access-Control-Allow-Origin' $http_origin always;
+            add_header 'Access-Control-Allow-Credentials' "true";
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            # if ($request_method = 'OPTIONS') {
+            #     add_header 'Access-Control-Allow-Origin' $http_origin always;
+            #     add_header 'Access-Control-Allow-Credentials' "true";
+            #     add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            #     add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            #     add_header 'Access-Control-Max-Age' 1728000;
+            #     add_header 'Content-Type' 'text/plain; charset=utf-8';
+            #     add_header 'Content-Length' 0;
+            #     return 200;
+            # }
+            
+            proxy_hide_header X-Powered-By;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+            # /query?k={k}&v={v} -> /api/1.0/query/{k}/{v}
+            
+            proxy_pass http://ca.nasa.nycu:4442/;
+        }
+    }
+
+}

@@ -1,0 +1,7 @@
+{"keys":
+    [{
+        "k":"_replace_me",
+        "kty":"oct",
+        "kid":"0001"
+    }]
+}
