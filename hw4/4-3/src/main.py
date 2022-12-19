@@ -15,7 +15,7 @@ def index():
     with open("/home/judge/hw4/4-3/data/current_time.txt", "r") as f:
         current_time = int(f.read())
     data = {
-        "disk": 0.1,
+        "disk": free_space / total_space,
         "uptime": current_time - boot_time,
         "time": current_time,
     }

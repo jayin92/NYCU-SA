@@ -5,7 +5,7 @@ cd /home/judge/hw4/4-3/
 while true
 do
     free_space=`df / | tail -n +2 | tr -s " " | cut -d" " -f3`;
-    total_space=`df / | tail -n +2 | tr -s " " | cut -d" " -f4`;
+    total_space=`df / | tail -n +2 | tr -s " " | cut -d" " -f2`;
     boot_time=`sysctl -a | grep kern.boottime | cut -d '=' -f 2 | cut -d ',' -f 1 | tr -d " "`;
     current_time=`date +%s`;
     echo $free_space > ./data/free_space.txt
